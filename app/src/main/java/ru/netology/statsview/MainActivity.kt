@@ -9,10 +9,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         findViewById<StatsView>(R.id.statsView).data = listOf(
-            0.25f,
-            0.25f,
-            0.25f,
-            0.25f,
+            500f,
+            150f,
+            250f,
+            100f,
+            300f
         )
     }
 }
