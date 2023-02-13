@@ -1,10 +1,7 @@
 package ru.netology.statsview.ui
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.PointF
-import android.graphics.RectF
+import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.withStyledAttributes
@@ -44,6 +41,11 @@ class StatsView @JvmOverloads constructor(
     }
 
     var data: List<Float> = emptyList()
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var full: Float = 0f
         set(value) {
             field = value
             invalidate()
@@ -92,10 +94,11 @@ class StatsView @JvmOverloads constructor(
         }
         var startAngle = -90F
 
-        val fullData = data.sum()
+        paint.color = Color.LTGRAY
+        canvas.drawCircle(center.x,center.y,radius,paint)
 
         data.forEachIndexed { index, datum ->
-            val percent = datum/fullData
+            val percent = datum/full
             val angle = percent * 360
             paint.color = colors.getOrElse(index){ generateRandomColor()}
             canvas.drawArc(oval, startAngle, angle, false, paint)
@@ -106,7 +109,7 @@ class StatsView @JvmOverloads constructor(
         canvas.drawCircle(center.x,center.y-radius,lineWidth/2f,dotPaint)
 
         canvas.drawText(
-            "%.2f%%".format(100f),//data.sum() * 100),
+            "%.2f%%".format(data.sum()/full * 100),
             center.x,
             center.y + textPaint.textSize / 4,
             textPaint
