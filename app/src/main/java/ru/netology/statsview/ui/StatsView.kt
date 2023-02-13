@@ -60,6 +60,12 @@ class StatsView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
 
+    private val dotPaint = Paint(
+        Paint.ANTI_ALIAS_FLAG
+    ).apply {
+        style = Paint.Style.FILL
+    }
+
     private val textPaint = Paint(
         Paint.ANTI_ALIAS_FLAG
     ).apply {
@@ -71,6 +77,7 @@ class StatsView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         radius = min(w, h) / 2F - lineWidth /2
         center = PointF(w / 2F, h / 2F)
+
         oval = RectF(
             center.x - radius,
             center.y - radius,
@@ -94,6 +101,9 @@ class StatsView @JvmOverloads constructor(
             canvas.drawArc(oval, startAngle, angle, false, paint)
             startAngle += angle
         }
+
+        dotPaint.color = colors[0]
+        canvas.drawCircle(center.x,center.y-radius,lineWidth/2f,dotPaint)
 
         canvas.drawText(
             "%.2f%%".format(100f),//data.sum() * 100),
