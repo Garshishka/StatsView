@@ -64,12 +64,12 @@ class StatsView @JvmOverloads constructor(
         }
         progress.clear()
         when (animationStyle) {
-            0 -> progress.add(0f)
             1 -> progress = (0..data.count()).map { 0f } as MutableList<Float>
+            else -> progress.add(0f)
         }
         rotationProgress = 0f
 
-        valueAnimator = (0..progress.size-1).map {
+        valueAnimator = (0..progress.size - 1).map {
             ValueAnimator.ofFloat(0f, 1f).apply {
                 addUpdateListener { anim ->
                     progress[it] = anim.animatedValue as Float
@@ -78,7 +78,7 @@ class StatsView @JvmOverloads constructor(
                     }
                     invalidate()
                 }
-                duration = if (animationStyle == 0) 1500L else 500L
+                duration = if (animationStyle == 1) 500L else 1500L
                 interpolator = LinearInterpolator()
             }
         }
@@ -131,7 +131,7 @@ class StatsView @JvmOverloads constructor(
         if (data.isEmpty()) {
             return
         }
-        var startAngle = -90F
+        var startAngle = if (animationStyle == 2) -45f else -90F
 
         paint.color = Color.LTGRAY
         canvas.drawCircle(center.x, center.y, radius, paint)
@@ -140,15 +140,30 @@ class StatsView @JvmOverloads constructor(
             val percent = datum / full
             val angle = percent * 360
             paint.color = colors.getOrElse(index) { generateRandomColor() }
-            val progressing = if (animationStyle == 1) progress[index] else progress[0]
-            canvas.drawArc(oval, startAngle+rotationProgress, angle * progressing, false, paint)
+            val progressing = when (animationStyle) {
+                1 -> progress[index]
+                2 -> progress[0] / 2
+                else -> progress[0]
+            }
+            canvas.drawArc(oval, startAngle + rotationProgress, angle * progressing, false, paint)
+            if (animationStyle == 2) {
+                canvas.drawArc(
+                    oval,
+                    startAngle + rotationProgress,
+                    -angle * progressing,
+                    false,
+                    paint
+                )
+            }
             startAngle += angle
         }
 
         paint.color = colors[0]
-        canvas.drawArc(
-            oval,-90f + rotationProgress, progress[0], false, paint
-        )
+        if (animationStyle != 2) {
+            canvas.drawArc(
+                oval, -90f + rotationProgress, progress[0], false, paint
+            )
+        }
 
         canvas.drawText(
             "%.2f%%".format(data.sum() / full * 100),
