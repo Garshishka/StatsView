@@ -23,6 +23,8 @@
         app:color4="#6dc122"
         app:lineWidth="16dp"
         app:textSize="40sp"
+        app:animationStyle="sequential"
+        app:loadRotation="false"
         android:layout_gravity="center"/>
 
 </FrameLayout>
