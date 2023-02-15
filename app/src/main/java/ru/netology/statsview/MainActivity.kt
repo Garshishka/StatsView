@@ -9,13 +9,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        findViewById<StatsView>(R.id.statsView).full = 1000f
-        findViewById<StatsView>(R.id.statsView).data = listOf(
+        val view = findViewById<StatsView>(R.id.statsView)
+        view.full = 2000f
+        view.data = listOf(
             500f,
-            150f,
-            50f,
-            50f,
-            100f,
+            500f,
+            500f,
+            500f,
         )
     }
 }
