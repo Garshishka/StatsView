@@ -27,11 +27,15 @@ class StatsView @JvmOverloads constructor(
     private var textSize = AndroidUtils.dp(context, 20).toFloat()
     private var lineWidth = AndroidUtils.dp(context, 5)
     private var colors = emptyList<Int>()
+    private var animationStyle = 0
+    private var loadRotation = false
 
     init {
         context.withStyledAttributes(attributeSet, R.styleable.StatsView) {
             textSize = getDimension(R.styleable.StatsView_textSize, textSize)
             lineWidth = getDimension(R.styleable.StatsView_lineWidth, lineWidth.toFloat()).toInt()
+            animationStyle = getInteger(R.styleable.StatsView_animationStyle, 0)
+            loadRotation = getBoolean(R.styleable.StatsView_loadRotation, false)
 
             colors = listOf(
                 getColor(R.styleable.StatsView_color1, generateRandomColor()),
@@ -44,6 +48,7 @@ class StatsView @JvmOverloads constructor(
     }
 
     private var progress: MutableList<Float> = mutableListOf()
+    private var rotationProgress = 0f
     private var valueAnimator: List<ValueAnimator> = emptyList()
 
     var data: List<Float> = emptyList()
@@ -57,23 +62,29 @@ class StatsView @JvmOverloads constructor(
             it.removeAllListeners()
             it.cancel()
         }
-        progress = (0..data.count()).map { 0f } as MutableList<Float>
+        progress.clear()
+        when (animationStyle) {
+            0 -> progress.add(0f)
+            1 -> progress = (0..data.count()).map { 0f } as MutableList<Float>
+        }
+        rotationProgress = 0f
 
-        valueAnimator = (0..data.count()).map {
+        valueAnimator = (0..progress.size-1).map {
             ValueAnimator.ofFloat(0f, 1f).apply {
                 addUpdateListener { anim ->
                     progress[it] = anim.animatedValue as Float
-                    //rotationProgress = progress * 360
+                    if (loadRotation) {
+                        rotationProgress = progress[it] * 360
+                    }
                     invalidate()
                 }
-                duration = 500
-                startDelay = 500
+                duration = if (animationStyle == 0) 1500L else 500L
                 interpolator = LinearInterpolator()
             }
         }
 
         AnimatorSet().apply {
-            startDelay = 500
+            startDelay = 1000
             playSequentially(valueAnimator)
         }.start()
     }
@@ -129,12 +140,15 @@ class StatsView @JvmOverloads constructor(
             val percent = datum / full
             val angle = percent * 360
             paint.color = colors.getOrElse(index) { generateRandomColor() }
-             canvas.drawArc(oval, startAngle, angle*progress[index], false, paint)
+            val progressing = if (animationStyle == 1) progress[index] else progress[0]
+            canvas.drawArc(oval, startAngle+rotationProgress, angle * progressing, false, paint)
             startAngle += angle
         }
 
         paint.color = colors[0]
-        canvas.drawArc(oval,-90f,progress[0],false,paint)
+        canvas.drawArc(
+            oval,-90f + rotationProgress, progress[0], false, paint
+        )
 
         canvas.drawText(
             "%.2f%%".format(data.sum() / full * 100),
