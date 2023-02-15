@@ -1,9 +1,11 @@
 package ru.netology.statsview.ui
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
+import android.view.animation.LinearInterpolator
 import androidx.core.content.withStyledAttributes
 import ru.netology.statsview.R
 import ru.netology.statsview.utils.AndroidUtils
@@ -40,16 +42,43 @@ class StatsView @JvmOverloads constructor(
 
     }
 
+    private var progress = 0f
+    private var rotationProgress = 0f
+    private var valueAnimator: ValueAnimator? = null
+
     var data: List<Float> = emptyList()
         set(value) {
             field = value
-            invalidate()
+            update()
         }
+
+    private fun update() {
+        valueAnimator?.let {
+            it.removeAllListeners()
+            it.cancel()
+        }
+        progress = 0f
+
+        valueAnimator = ValueAnimator.ofFloat(0f,1f).apply {
+            addUpdateListener { anim ->
+                progress = anim.animatedValue as Float
+                rotationProgress = progress*360
+                invalidate()
+            }
+            duration = 1500
+            startDelay = 500
+            interpolator = LinearInterpolator()
+        }.also {
+            it.start()
+        }
+    }
+
     var full: Float = 0f
         set(value) {
             field = value
             invalidate()
         }
+
     private var radius = 0F
     private var center = PointF()
     private var oval = RectF()
@@ -60,12 +89,6 @@ class StatsView @JvmOverloads constructor(
         style = Paint.Style.STROKE
         strokeJoin = Paint.Join.ROUND
         strokeCap = Paint.Cap.ROUND
-    }
-
-    private val dotPaint = Paint(
-        Paint.ANTI_ALIAS_FLAG
-    ).apply {
-        style = Paint.Style.FILL
     }
 
     private val textPaint = Paint(
@@ -101,12 +124,12 @@ class StatsView @JvmOverloads constructor(
             val percent = datum/full
             val angle = percent * 360
             paint.color = colors.getOrElse(index){ generateRandomColor()}
-            canvas.drawArc(oval, startAngle, angle, false, paint)
+            canvas.drawArc(oval, startAngle+rotationProgress, angle*progress, false, paint)
             startAngle += angle
         }
 
-        dotPaint.color = colors[0]
-        canvas.drawCircle(center.x,center.y-radius,lineWidth/2f,dotPaint)
+        paint.color = colors[0]
+        canvas.drawArc(oval,-90f+rotationProgress,progress,false,paint)
 
         canvas.drawText(
             "%.2f%%".format(data.sum()/full * 100),
