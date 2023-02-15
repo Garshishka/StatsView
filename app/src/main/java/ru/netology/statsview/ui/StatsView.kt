@@ -1,5 +1,6 @@
 package ru.netology.statsview.ui
 
+import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
@@ -42,9 +43,8 @@ class StatsView @JvmOverloads constructor(
 
     }
 
-    private var progress = 0f
-    private var rotationProgress = 0f
-    private var valueAnimator: ValueAnimator? = null
+    private var progress: MutableList<Float> = mutableListOf()
+    private var valueAnimator: List<ValueAnimator> = emptyList()
 
     var data: List<Float> = emptyList()
         set(value) {
@@ -53,24 +53,29 @@ class StatsView @JvmOverloads constructor(
         }
 
     private fun update() {
-        valueAnimator?.let {
+        valueAnimator.forEach {
             it.removeAllListeners()
             it.cancel()
         }
-        progress = 0f
+        progress = (0..data.count()).map { 0f } as MutableList<Float>
 
-        valueAnimator = ValueAnimator.ofFloat(0f,1f).apply {
-            addUpdateListener { anim ->
-                progress = anim.animatedValue as Float
-                rotationProgress = progress*360
-                invalidate()
+        valueAnimator = (0..data.count()).map {
+            ValueAnimator.ofFloat(0f, 1f).apply {
+                addUpdateListener { anim ->
+                    progress[it] = anim.animatedValue as Float
+                    //rotationProgress = progress * 360
+                    invalidate()
+                }
+                duration = 500
+                startDelay = 500
+                interpolator = LinearInterpolator()
             }
-            duration = 1500
-            startDelay = 500
-            interpolator = LinearInterpolator()
-        }.also {
-            it.start()
         }
+
+        AnimatorSet().apply {
+            startDelay = 500
+            playSequentially(valueAnimator)
+        }.start()
     }
 
     var full: Float = 0f
@@ -100,7 +105,7 @@ class StatsView @JvmOverloads constructor(
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        radius = min(w, h) / 2F - lineWidth /2
+        radius = min(w, h) / 2F - lineWidth / 2
         center = PointF(w / 2F, h / 2F)
 
         oval = RectF(
@@ -118,21 +123,21 @@ class StatsView @JvmOverloads constructor(
         var startAngle = -90F
 
         paint.color = Color.LTGRAY
-        canvas.drawCircle(center.x,center.y,radius,paint)
+        canvas.drawCircle(center.x, center.y, radius, paint)
 
         data.forEachIndexed { index, datum ->
-            val percent = datum/full
+            val percent = datum / full
             val angle = percent * 360
-            paint.color = colors.getOrElse(index){ generateRandomColor()}
-            canvas.drawArc(oval, startAngle+rotationProgress, angle*progress, false, paint)
+            paint.color = colors.getOrElse(index) { generateRandomColor() }
+             canvas.drawArc(oval, startAngle, angle*progress[index], false, paint)
             startAngle += angle
         }
 
         paint.color = colors[0]
-        canvas.drawArc(oval,-90f+rotationProgress,progress,false,paint)
+        canvas.drawArc(oval,-90f,progress[0],false,paint)
 
         canvas.drawText(
-            "%.2f%%".format(data.sum()/full * 100),
+            "%.2f%%".format(data.sum() / full * 100),
             center.x,
             center.y + textPaint.textSize / 4,
             textPaint
