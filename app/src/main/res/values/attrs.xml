@@ -10,7 +10,7 @@
         <attr name="animationStyle" format="enum">
             <enum name="parallel" value="0"/>
             <enum name="sequential" value="1"/>
-            <enum name="doublesided" value="2"/>
+            <enum name="bidirectional" value="2"/>
         </attr>
         <attr name="loadRotation" format="boolean"/>
     </declare-styleable>
